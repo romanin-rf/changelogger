@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "changelogger"
+version = "0.2.5"
+description = "A module for generating changelog."
+authors = ["Romanin <semina054@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.scripts]
+changelogger = "changelogger.cli:main"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4.0"
+pyyaml = ">=6.0.1"
+pydantic = ">=2.5"
+rich-click = "^1.7.3"
+
+[tool.poetry.group.dev.dependencies]
+rich = ">=13"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
