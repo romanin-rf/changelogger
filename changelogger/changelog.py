@@ -10,7 +10,7 @@ except:
 # > Typing
 from typing import Type, Callable, TypeVar, Union, Mapping, Sequence, Iterable, Tuple, Dict, List, Any
 # > Local Imports
-from .models import ChangelogData, ChangelogDataVersion, ChangelogDataChange
+from .models import ChangeLog, Version, Change, DEFAULT_CHANGELOG_DATA
 from .exporter import ExporterBase
 from .exceptions import (
     VersionExistError, VersionNotExistError,
@@ -24,22 +24,22 @@ from .units import (
 
 # ! Type Alias
 T = TypeVar('T')
-ChangelogDataType = Dict[str, Any]
+ChangelogData = Dict[str, Any]
 ExporterNameType = str
 ExporterType = Type[ExporterBase]
 ExporterExtraType = Dict[str, Any]
 
 # ! Methods
-def notwrap(data: ChangelogDataType) -> ChangelogDataType:
+def notwrap(data: ChangelogData) -> ChangelogData:
     return data
 
-def notunwrap(data: ChangelogDataType) -> ChangelogDataType:
+def notunwrap(data: ChangelogData) -> ChangelogData:
     return data
 
-def defwrap(data: ChangelogDataType) -> ChangelogData:
-    return ChangelogData.model_validate(data)
+def defwrap(data: ChangelogData) -> ChangeLog:
+    return ChangeLog.model_validate(data)
 
-def defunwrap(data: ChangelogData) -> ChangelogDataType:
+def defunwrap(data: ChangeLog) -> ChangelogData:
     return data.model_dump(warnings=False)
 
 # ! Main Class
@@ -49,7 +49,7 @@ class ChangelogFile:
         self,
         filepath: str,
         data: T,
-        unwraping: Callable[[T], ChangelogDataType]=notunwrap
+        unwraping: Callable[[T], ChangelogData]=notunwrap
     ) -> None:
         with open(filepath, 'w') as file:
             yaml.dump(unwraping(data), file, Dumper=Dumper, sort_keys=False)
@@ -57,7 +57,7 @@ class ChangelogFile:
     def __load(
         self,
         filepath: str,
-        wraping: Callable[[ChangelogDataType], T]=notwrap
+        wraping: Callable[[ChangelogData], T]=notwrap
     ) -> T:
         with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
             return wraping(yaml.load(file, Loader=Loader))
@@ -65,8 +65,8 @@ class ChangelogFile:
     def __loadump(
         self,
         filepath: str,
-        default: ChangelogDataType
-    ) -> ChangelogData:
+        default: ChangelogData
+    ) -> ChangeLog:
         data = default.copy()
         if os.path.exists(filepath):
             try:
@@ -90,10 +90,7 @@ class ChangelogFile:
         exporters: List[Tuple[ExporterNameType, ExporterType, ExporterExtraType]]=DEFAULT_EXPORTERS
     ) -> None:
         self.filepath = os.path.abspath(Path(filepath))
-        self.data = self.__loadump(
-            self.filepath,
-            ChangelogData().model_dump(warnings=False)
-        )
+        self.data = self.__loadump(self.filepath, DEFAULT_CHANGELOG_DATA)
         self.exporters: Dict[str, ExporterBase] = {}
         self.set_change_types(change_types)
         for format, exporter, extorter_extra in exporters:
@@ -129,7 +126,7 @@ class ChangelogFile:
             __date = __date.timestamp()
         else:
             __date = float(__date)
-        self.data.versions[__version] = ChangelogDataVersion(version=__version, date=__date, url=__url, tag=__tag)
+        self.data.versions[__version] = Version(version=__version, date=__date, url=__url, tag=__tag)
         if refresh:
             self.__refresh()
     
@@ -144,7 +141,7 @@ class ChangelogFile:
         if not self.exist_change_type(__type):
             raise ChangeTypeKeyError(__type)
         self.data.versions[__version].changes.append(
-            ChangelogDataChange(
+            Change(
                 type=__type, description=__description
             )
         )

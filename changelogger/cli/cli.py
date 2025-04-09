@@ -29,9 +29,9 @@ def exceptor():
                 return method(*args, **kwargs)
             except Exception as e:
                 if debug:
-                    console.print_exception(show_locals=True, word_wrap=True)
+                    console.print_exception(show_locals=True, word_wrap=True, width=console.width)
                 else:
-                    raise e
+                    console.print(f"[red]{e.__class__.__name__}[/red]: {e.__str__()}")
         return wrapped
     return wrapper
 
@@ -40,7 +40,7 @@ def exceptor():
 @click.option(
     '--filepath', '-f', 'fp',
     help='Path to changelog file.',
-    type=click.Path(dir_okay=False),
+    type=click.Path(dir_okay=False, resolve_path=True, path_type=str),
     default=DEFAULT_FILEPATH, show_default=True
 )
 @click.option(
@@ -53,7 +53,7 @@ def exceptor():
 def main(fp: str, _debug: bool):
     global filepath, changelog, debug
     debug = _debug
-    filepath = os.path.abspath(fp)
+    filepath = fp
     changelog = ChangelogFile(filepath)
 
 # ! Main (Group) > Commands
@@ -71,15 +71,15 @@ def create():
 @main.command('tree', help='Displaying the changelog as a tree.')
 @exceptor()
 def tree():
-    main_tree = Tree(f'\[[yellow]{os.path.basename(changelog.filepath)}[/yellow]]', highlight=True)
-    change_types_tree = main_tree.add('\[[magenta]change_types[/magenta]]')
+    main_tree = Tree(f'\\[[yellow]{os.path.basename(changelog.filepath)}[/yellow]]', highlight=True)
+    change_types_tree = main_tree.add('\\[[magenta]change_types[/magenta]]')
     for idx, change_type in enumerate(changelog.data.change_types.items()):
         change_types_tree.add(f'{idx}: {repr(change_type)}')
-    versions_tree = main_tree.add('\[[magenta]versions[/magenta]]')
+    versions_tree = main_tree.add('\\[[magenta]versions[/magenta]]')
     for version in changelog.data.versions.values():
         version_datetime = datetime.fromtimestamp(version.date)
         version_tree = versions_tree.add(
-            f'[yellow]v{version.version}[/yellow] ([bold not italic cyan]{version_datetime.day:02d}.{version_datetime.month:02d}.{version_datetime.year:04d}[/bold not italic cyan]) \[[green]{version.tag.upper()}[/green]]'
+            f'[yellow]v{version.version}[/yellow] ([bold not italic cyan]{version_datetime.day:02d}.{version_datetime.month:02d}.{version_datetime.year:04d}[/bold not italic cyan]) \\[[green]{version.tag.upper()}[/green]]'
         )
         for idx, change in enumerate(version.changes):
             version_tree.add(f'{idx}: {changelog.data.change_types[change.type]} [green]{change.description}[/green]')
@@ -93,7 +93,7 @@ def tree():
 )
 @click.option(
     '-o', '--output', 'output',
-    type=click.Path(False, True, False),
+    type=click.Path(exists=False, file_okay=True, dir_okay=False),
     default=DEFAULT_OUTPUT_FILEPATH, show_default=True
 )
 @exceptor()

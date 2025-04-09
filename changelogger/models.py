@@ -1,19 +1,21 @@
 from pydantic import BaseModel
-from typing import Tuple, List, Dict, Any
+from typing import List, Dict, Any
 
 # ! ChangelogFile Models
-class ChangelogDataChange(BaseModel):
+class Change(BaseModel):
     type: str
     description: str
 
-class ChangelogDataVersion(BaseModel):
+class Version(BaseModel):
     version: str
     date: float
     url: str
     tag: str
-    changes: List[ChangelogDataChange]=[]
+    changes: List[Change]=[]
 
-class ChangelogData(BaseModel):
+class ChangeLog(BaseModel):
     exporters_extra: Dict[str, Dict[str, Any]] = {}
     change_types: Dict[str, str] = {}
-    versions: Dict[str, ChangelogDataVersion] = {}
+    versions: Dict[str, Version] = {}
+
+DEFAULT_CHANGELOG_DATA = ChangeLog().model_dump(warnings=False)

@@ -2,23 +2,26 @@ from string import Formatter
 from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional, List, Any
-from .models import ChangelogData
+from .models import ChangeLog
 
 # ! Formatter
 class ExtendedFormatter(Formatter):
     def convert_field(self, value: Any, conversion: Optional[str]) -> str:
+        string_value = str(value)
         if conversion == 'U':
-            return str(value).upper()
+            return string_value.upper()
         elif conversion == 'L':
-            return str(value).lower()
+            return string_value.lower()
         elif conversion == 'T':
-            return str(value).title()
+            return string_value.title()
         elif conversion == 'H':
-            return str(value).capitalize()
+            return string_value.capitalize()
         elif conversion == 'C':
-            return str(value).casefold()
+            return string_value.casefold()
         elif conversion == 'R':
-            return str(value).swapcase()
+            return string_value.swapcase()
+        elif conversion == 'S':
+            return string_value.strip()
         return super().convert_field(value, conversion)
 
 # ! Exporter Base
@@ -29,7 +32,7 @@ class ExporterBase:
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}({self.extra})'
     
-    def export(self, filepath: str, data: ChangelogData) -> None:
+    def export(self, filepath: str, data: ChangeLog) -> None:
         raise NotImplementedError
 
 # ! Markdown Version
@@ -53,7 +56,7 @@ class MarkdownTableExporter(ExporterBase):
         self.extra = MarkdownTableExporterExtra(**extra)
         self.formatter = ExtendedFormatter()
     
-    def export(self, filepath: str, data: ChangelogData) -> None:
+    def export(self, filepath: str, data: ChangeLog) -> None:
         versions_data_lines = [ *self.extra.start ]
         for version in data.versions.values():
             changes_data_lines = []
@@ -88,4 +91,5 @@ class MarkdownTableExporter(ExporterBase):
             file.write(self.extra.version_sep.join(versions_data_lines))
 
 # ! Vars
+
 DEFAULT_MARKDOWN_EXTRA = MarkdownTableExporterExtra().model_dump(warnings=False)

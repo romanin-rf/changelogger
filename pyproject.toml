@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "changelogger"
-version = "0.2.5"
+version = "0.3.0"
 description = "A module for generating changelog."
 authors = ["Romanin <semina054@gmail.com>"]
 license = "MIT"
